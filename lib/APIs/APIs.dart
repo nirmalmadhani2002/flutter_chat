@@ -32,4 +32,23 @@ class APIs {
         .doc(user.uid)
         .set(chatUser.toJson());
   }
+
+  static ChatUser me = ChatUser(
+      id: user.uid,
+      name: user.displayName.toString(),
+      email: user.email.toString(),
+      about: "Hey, I'm using We Chat!",
+      image: user.photoURL.toString(),
+      createdAt: '',
+      isOnline: false,
+      lastActive: '',
+      pushToken: '');
+
+
+  static Future<void> updateUserInfo() async {
+    await firestore.collection('users').doc(user.uid).update({
+      'name': me.name,
+      'about': me.about,
+    });
+  }
 }

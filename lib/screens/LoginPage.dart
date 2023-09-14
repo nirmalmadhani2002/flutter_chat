@@ -36,8 +36,8 @@ class _LoginPageState extends State<LoginPage> {
                     behavior: SnackBarBehavior.floating),
               );
 
-              Navigator.pushNamedAndRemoveUntil(
-                  context, 'homePage', (route) => false);
+              Navigator.pushReplacement(
+                  context, MaterialPageRoute(builder: (_) =>  MyHomePage(user:APIs.me ,)));
               FirebaseAuthHelper.firebaseAuthHelper
                   .singWithGoogle()
                   .then((user) async {
@@ -45,11 +45,11 @@ class _LoginPageState extends State<LoginPage> {
 
                 if ((await APIs.userExists())) {
                   Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (_) => const MyHomePage()));
+                      MaterialPageRoute(builder: (_) =>  MyHomePage(user:APIs.me ,)));
                 } else {
                   await APIs.createUser().then((value) {
                     Navigator.pushReplacement(context,
-                        MaterialPageRoute(builder: (_) => const MyHomePage()));
+                        MaterialPageRoute(builder: (_) =>  MyHomePage(user: APIs.me,)));
                   });
                 }
               });

@@ -1,12 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../APIs/APIs.dart';
 import '../Helper/firebase_helper.dart';
 import '../Modal/ChatUser.dart';
 import 'ChatUserCard.dart';
+import 'LoginPage.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  final ChatUser user;
+
+  const MyHomePage({super.key, required this.user});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -14,6 +19,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   List _list = [];
+
+  final formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,9 +29,19 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: [
           IconButton(
               onPressed: () async {
-                await FirebaseAuthHelper.firebaseAuthHelper.logOut();
+                APIs.auth.signOut().then((value) async {
+                  await GoogleSignIn().signOut().then((value) async {
+                    Navigator.pop(context);
+                    await FirebaseAuthHelper.firebaseAuthHelper.logOut();
+                    //for moving to home screen
+                    Navigator.pop(context);
 
-                Navigator.pushReplacementNamed(context, '/');
+                    APIs.auth = FirebaseAuth.instance;
+
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (_) => const LoginPage()));
+                  });
+                });
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -38,6 +56,50 @@ class _MyHomePageState extends State<MyHomePage> {
               icon: Icon(Icons.logout))
         ],
         title: const Text("Chat Apps"),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+              context: context,
+              builder: (context) => Form(
+                key: formKey,
+                child: AlertDialog(
+                  title: Text("update user name"),
+                      actions: [
+                        TextFormField(
+                          initialValue: widget.user.name,
+                          onSaved: (val) => APIs.me.name = val ?? '',
+                          validator: (val) => val != null && val.isNotEmpty
+                              ? null
+                              : 'Required Field',
+                          decoration: InputDecoration(
+                              prefixIcon:
+                                  const Icon(Icons.person, color: Colors.blue),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              hintText: 'eg. Happy Singh',
+                              label: const Text('Name')),
+                        ),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                              shape: const StadiumBorder(),
+                              minimumSize: Size(20, 10)),
+                          onPressed: () {
+                            if (formKey.currentState!.validate()) {
+                              formKey.currentState!.save();
+                              APIs.updateUserInfo().then((value) {
+
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.edit, size: 28),
+                          label:
+                          const Text('UPDATE', style: TextStyle(fontSize: 16)),
+                        )
+                      ],
+                    ),
+              ));
+        },
       ),
       body: StreamBuilder(
         stream: APIs.firestore.collection('users').snapshots(),
